@@ -24,11 +24,11 @@ npm run dev          # http://localhost:3000
 - 默认路径：`<项目根>/data/brake.db`
 - 覆盖方式：环境变量 `BRAKE_DB_PATH`
 - 表结构：`scores(id, name, time, reaction, entry, peak, distance, created_at)`
-- 首次启动：表为空时自动灌入 18 条种子成绩
+- 首次启动：只建表，不写任何假数据，榜单从空开始
 
 排行榜按人名取最好成绩（`GROUP BY name` + `MIN(time)`）；失败局（踏板断裂 / 未制动）不写入。
 
-`data/` 已加进 `.gitignore`。想清空榜单就删掉这个目录，下次请求会自动重建并重新灌种子。
+`data/` 已加进 `.gitignore`。想清空榜单就删掉这个目录，下次请求会自动重建一张空表。
 
 ## 部署
 
