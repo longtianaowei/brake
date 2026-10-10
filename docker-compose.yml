@@ -1,0 +1,24 @@
+# 服务器端部署文件：只管应用容器。
+# 反向代理与 HTTPS 由服务器上你自己的 Caddy 负责，这里不掺和。
+#
+#   docker compose pull
+#   docker compose up -d
+#
+# 要改的东西都直接写在下面，不需要额外的 .env。
+
+services:
+  app:
+    image: ghcr.io/longtianaowei/brake:latest
+    restart: unless-stopped
+    environment:
+      BRAKE_DB_PATH: /data/brake.db
+      PORT: "3000"
+    volumes:
+      # 数据库落在与本文件同级的 data/ 目录，直接可看、可备份。
+      # 想换位置就改左边这段路径。
+      - ./data:/data
+    ports:
+      # 只监听回环，公网访问不到，由宿主机上的 Caddy 反代进来。
+      # 端口冲突就改左边的 3000（同时要改 Caddy 里的 upstream）。
+      - "127.0.0.1:8099:3000"
+    # 健康检查镜像里已经定义（wget 打 /），这里不重复，避免两处漂移

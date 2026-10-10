@@ -91,6 +91,10 @@ export default function Leaderboard() {
           返回首页
         </Link>
       </div>
+
+      <p className="disclaimer">
+        榜单昵称与成绩均为玩家自填的虚构数据，与任何车企、任何真实车型及任何真实事件均无关联。
+      </p>
     </div>
   );
 }

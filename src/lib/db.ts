@@ -48,8 +48,12 @@ const SEED: Array<[string, number]> = [
   ["成都老司机", 3.43],
 ];
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_FILE = path.join(DATA_DIR, "brake.db");
+/**
+ * 数据库位置。部署时用 BRAKE_DB_PATH 指向持久卷，例如 /data/brake.db。
+ * 默认是项目下的 data/brake.db，本地开发零配置。
+ */
+const DB_FILE = process.env.BRAKE_DB_PATH?.trim() || path.join(process.cwd(), "data", "brake.db");
+const DATA_DIR = path.dirname(DB_FILE);
 
 const cache = globalThis as unknown as { __brakeDb?: DatabaseSync };
 

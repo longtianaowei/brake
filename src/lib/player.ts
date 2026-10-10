@@ -1,20 +1,29 @@
 const KEY = "brake-sim.player";
-export const DEFAULT_PLAYER = "你";
+
+/** 留空入榜时用的兜底名。 */
+export const FALLBACK_PLAYER = "匿名老司机";
 
 export function getPlayerName(): string {
-  if (typeof window === "undefined") return DEFAULT_PLAYER;
+  if (typeof window === "undefined") return "";
   try {
-    return window.localStorage.getItem(KEY)?.trim() || DEFAULT_PLAYER;
+    return window.localStorage.getItem(KEY)?.trim() ?? "";
   } catch {
-    return DEFAULT_PLAYER;
+    return "";
   }
 }
 
 export function setPlayerName(name: string): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(KEY, name.trim() || DEFAULT_PLAYER);
+    const next = name.trim();
+    if (next) window.localStorage.setItem(KEY, next);
+    else window.localStorage.removeItem(KEY);
   } catch {
     /* 隐私模式等场景下忽略 */
   }
+}
+
+/** 真正写进排行榜的名字。 */
+export function resolvePlayerName(): string {
+  return getPlayerName() || FALLBACK_PLAYER;
 }

@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconArrowUpRight } from "@/components/icons";
-import { getPlayerName, setPlayerName } from "@/lib/player";
+import { FALLBACK_PLAYER, getPlayerName, setPlayerName } from "@/lib/player";
 
 type Me = { name: string; best: number | null; rank: number | null } | null;
 
 export default function HomePanel() {
-  const [name, setName] = useState("你");
+  const [name, setName] = useState("");
   const [me, setMe] = useState<Me>(null);
   const [saved, setSaved] = useState(false);
+  const lookupName = name.trim() || FALLBACK_PLAYER;
 
   useEffect(() => {
     setName(getPlayerName());
@@ -18,7 +19,7 @@ export default function HomePanel() {
 
   useEffect(() => {
     let alive = true;
-    fetch(`/api/scores?limit=1&name=${encodeURIComponent(name)}`)
+    fetch(`/api/scores?limit=1&name=${encodeURIComponent(lookupName)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { me?: Me } | null) => {
         if (alive) setMe(d?.me ?? null);
@@ -27,7 +28,7 @@ export default function HomePanel() {
     return () => {
       alive = false;
     };
-  }, [name]);
+  }, [lookupName]);
 
   return (
     <div className="card">
@@ -56,20 +57,24 @@ export default function HomePanel() {
           id="player"
           value={name}
           maxLength={16}
-          placeholder="你"
+          placeholder="填写车手名"
           onChange={(e) => {
             setName(e.target.value);
             setSaved(false);
           }}
           onBlur={() => {
-            const next = name.trim() || "你";
+            const next = name.trim();
             setName(next);
             setPlayerName(next);
             setSaved(true);
             window.setTimeout(() => setSaved(false), 1600);
           }}
         />
-        <span className={`saved${saved ? " on" : ""}`}>已保存</span>
+        {name.trim() ? (
+          <span className={`saved${saved ? " on" : ""}`}>已保存</span>
+        ) : (
+          <span className="name-hint">留空记为{FALLBACK_PLAYER}</span>
+        )}
       </div>
 
       <div className="btn-row">
@@ -82,10 +87,14 @@ export default function HomePanel() {
         </Link>
       </div>
 
-      <p className="note">
-        娱乐向简化物理模型，不代表任何真实车型数据
-        {me?.rank != null && me.best != null ? ` · 当前榜上第 ${me.rank} 名` : ""}
+      <p className="disclaimer">
+        本模拟器为娱乐向简化物理模型，与任何车企、任何真实车型及任何真实事件均无关联，请勿对号入座或无端联想。
+        所有数值均为虚构设定，不代表真实车辆的性能、质量或安全性。
       </p>
+
+      {name.trim() && me?.rank != null && me.best != null && (
+        <p className="note">当前榜上第 {me.rank} 名</p>
+      )}
     </div>
   );
 }

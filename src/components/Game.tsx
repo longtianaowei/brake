@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { IconArrowUpRight } from "@/components/icons";
 import { drawChart, drawRoad, fitCanvas, type Surface } from "@/lib/draw";
 import { advance, CFG, createRun, KMH, summarize, type RunState } from "@/lib/physics";
-import { getPlayerName } from "@/lib/player";
+import { resolvePlayerName } from "@/lib/player";
 
 type Submit = { rank: number; total: number; best: number; isBest: boolean };
 
@@ -84,6 +84,10 @@ export default function Game() {
 
     const sum = summarize(s);
     setFinished({ ...s, samples: [...s.samples] });
+
+    // 只有安全停稳才算成绩；踏板断裂 / 未制动一律不入榜
+    if (s.outcome !== "stopped") return;
+
     setSaving(true);
 
     try {
@@ -91,7 +95,7 @@ export default function Game() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: getPlayerName(),
+          name: resolvePlayerName(),
           time: sum.total,
           reaction: sum.reaction,
           entry: s.entryKmh,
@@ -179,7 +183,7 @@ export default function Game() {
   // 开局前先取个人最好成绩，用来判断是否新纪录
   useEffect(() => {
     let alive = true;
-    fetch(`/api/scores?limit=1&name=${encodeURIComponent(getPlayerName())}`)
+    fetch(`/api/scores?limit=1&name=${encodeURIComponent(resolvePlayerName())}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { me?: { best: number | null } } | null) => {
         if (alive) setBestBefore(d?.me?.best ?? null);
@@ -418,16 +422,17 @@ export function Result({
         </div>
       </div>
 
-      {ok &&
-        (saving ? (
-          <p className="rank-badge plain">正在写入排行榜…</p>
-        ) : submit ? (
-          <p className="rank-badge">
-            已录入排行榜 · 第 {submit.rank} 名 · 个人最好 {submit.best.toFixed(3)} s
-          </p>
-        ) : (
-          <p className="rank-badge plain">成绩未写入排行榜（离线）</p>
-        ))}
+      {!ok ? (
+        <p className="rank-badge plain">本局未计入排行榜</p>
+      ) : saving ? (
+        <p className="rank-badge plain">正在写入排行榜…</p>
+      ) : submit ? (
+        <p className="rank-badge">
+          已录入排行榜 · 第 {submit.rank} 名 · 个人最好 {submit.best.toFixed(3)} s
+        </p>
+      ) : (
+        <p className="rank-badge plain">成绩未写入排行榜（离线）</p>
+      )}
 
       <div className="btn-row">
         <button type="button" className="btn btn-primary" onClick={onRetry}>
